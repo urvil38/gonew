@@ -1,6 +1,7 @@
 package main
 
 import (
+	"strings"
 	"os/exec"
 	"flag"
 	"fmt"
@@ -34,7 +35,9 @@ func main(){
 	}
 	
 	if *path != "" {
-		projectPath = *path + "/" + *projectName
+		if !strings.HasSuffix(*path,"/") {
+			projectPath = *path + "/" + *projectName
+		}
 	}
 
 	switch (*texteditor) {
