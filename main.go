@@ -11,9 +11,8 @@ import (
 var (
 	projectName string
 	projectPath string
-	gopath = os.Getenv("GOPATH")
 	texteditor string
-	texteditorCmd string
+	gopath = os.Getenv("GOPATH") //getting value of $GOPATH from environment variable
 )
 
 func main(){
@@ -23,6 +22,7 @@ func main(){
 		os.Exit(1)
 	}
 	
+	//parsing flags
 	projectName := flag.String("p","","specify new project name")
 	projectPath = gopath + "/src/" + *projectName
 	path := flag.String("path",projectPath,"specify path of the project")
@@ -40,6 +40,7 @@ func main(){
 		}
 	}
 
+	var texteditorCmd string
 	switch (*texteditor) {
 	case "atom":
 		texteditorCmd = "atom"
@@ -51,7 +52,8 @@ func main(){
 		texteditorCmd = "code"
 	}
 	
-	
+	//checking the project name specified by user is already exists or not
+	//if exists then print the error and exit 
 	_,err := os.Stat(projectPath)
 	if err == nil {
 		err := fmt.Errorf("Same Project name exist %v.Please choose another name",*projectName)
@@ -59,6 +61,8 @@ func main(){
 		os.Exit(1)
 	}
 	
+	//making project dir specified by user in -path flag and 
+	//opening it in text editor specified by user in -t flag
 	_ = os.MkdirAll(projectPath,os.ModePerm)
 	fmt.Printf("succesfully create project %v at %v\n",*projectName,projectPath)
 	cmd := exec.Command(texteditorCmd,projectPath)
