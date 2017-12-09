@@ -12,8 +12,18 @@ var (
 	projectName string
 	projectPath string
 	texteditor string
-	gopath = os.Getenv("GOPATH") //getting value of $GOPATH from environment variable
+	gopath = getenv("GOPATH") //getting value of $GOPATH from environment variable
 )
+
+func getenv(env string) string {
+	env = os.Getenv(env)
+	if env == "" {
+		err := fmt.Errorf("Error: Please Set $GOPATH env or provide project path with --path flag")
+		fmt.Println(err.Error())
+		os.Exit(1)
+	}
+	return env
+} 
 
 func main(){
 	
@@ -25,7 +35,7 @@ func main(){
 	//parsing flags
 	projectName := flag.String("p","","specify new project name")
 	projectPath = gopath + "/src/" + *projectName
-	path := flag.String("path",projectPath,"specify path of the project")
+	path := flag.String("path", projectPath ,"specify path of the project")
 	texteditor := flag.String("t","vscode","specify text editor to open project default is vscode.\n\toption:\n\t\tsublime , vscode , atom")
 	flag.Parse()
 	
