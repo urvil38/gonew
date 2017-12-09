@@ -37,6 +37,8 @@ func main(){
 	if *path != "" {
 		if !strings.HasSuffix(*path,"/") {
 			projectPath = *path + "/" + *projectName
+		}else{
+			projectPath = *path + *projectName
 		}
 	}
 
