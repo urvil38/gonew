@@ -1,83 +1,75 @@
 package main
 
 import (
-	"strings"
-	"os/exec"
 	"flag"
 	"fmt"
+	"log"
 	"os"
+	"os/exec"
+	"path/filepath"
 )
 
-var (
-	projectName string
-	projectPath string
-	texteditor string
-	gopath = getenv("GOPATH") //getting value of $GOPATH from environment variable
-)
+type Project struct {
+	name   string
+	path   string
+	editor string
+}
 
-func getenv(env string) string {
-	env = os.Getenv(env)
-	if env == "" {
-		err := fmt.Errorf("Error: Please Set $GOPATH env or provide project path with --path flag")
-		fmt.Println(err.Error())
-		os.Exit(1)
-	}
-	return env
-} 
+func main() {
 
-func main(){
-	
-	if len(os.Args) < 2 {
-		fmt.Printf("Create new go project and open in text editor.\nUsage:\n\t%v\t-p [Project_name] -t [Text_Editor] --path [Project_path]\n",os.Args[0])
-		os.Exit(1)
-	}
-	
-	//parsing flags
-	projectName := flag.String("p","","specify new project name")
-	projectPath = gopath + "/src/" + *projectName
-	path := flag.String("path", projectPath ,"specify path of the project")
-	texteditor := flag.String("t","vscode","specify text editor to open project default is vscode.\n\toption:\n\t\tsublime , vscode , atom")
+	var p Project
+
+	flag.StringVar(&p.name, "name", "", "project name")
+	flag.StringVar(&p.name, "n", "", "project name")
+	flag.StringVar(&p.editor, "e", "vscode", "specify text editor to open project. option: sublime, vscode, atom")
+	flag.StringVar(&p.editor, "editor", "vscode", "specify text editor to open project. option: sublime, vscode, atom")
+	flag.StringVar(&p.path, "path", "", "project path")
+	flag.StringVar(&p.path, "p", "", "project path")
 	flag.Parse()
-	
-	if *projectName == "" {
-		flag.PrintDefaults()
+
+	if p.name == "" {
+		flag.Usage()
 		os.Exit(1)
 	}
-	
-	if *path != "" {
-		if !strings.HasSuffix(*path,"/") {
-			projectPath = *path + "/" + *projectName
-		}else{
-			projectPath = *path + *projectName
-		}
+
+	gopath := os.Getenv("GOPATH")
+	if gopath == "" && p.path == "" {
+		fmt.Printf("Error: GOPATH environment variable is not set and no path provided\n")
+		os.Exit(1)
+	}
+
+	pwd, err := os.Getwd()
+	if err != nil {
+		log.Fatal(err)
+	}
+	if gopath != "" {
+		p.path = filepath.Join(gopath, "src", p.path, p.name)
+	} else {
+		p.path = filepath.Join(pwd, p.path, p.name)
 	}
 
 	var texteditorCmd string
-	switch (*texteditor) {
+	switch p.editor {
 	case "atom":
 		texteditorCmd = "atom"
-		break
 	case "sublime":
 		texteditorCmd = "subl"
-		break
 	default:
 		texteditorCmd = "code"
 	}
-	
+
 	//checking the project name specified by user is already exists or not
-	//if exists then print the error and exit 
-	_,err := os.Stat(projectPath)
-	if err == nil {
-		err := fmt.Errorf("Same Project name exist %v.Please choose another name",*projectName)
-		fmt.Println("Error: "+err.Error())
+	//if exists then print the error and exit
+	if _, err = os.Stat(p.path); err == nil {
+		fmt.Printf("Error: Same project name \"%v\" already exist. Please choose another name.\n", p.name)
 		os.Exit(1)
 	}
-	
-	//making project dir specified by user in -path flag and 
+
+	//making project dir specified by user in -path flag and
 	//opening it in text editor specified by user in -t flag
-	_ = os.MkdirAll(projectPath,os.ModePerm)
-	fmt.Printf("succesfully create project %v at %v\n",*projectName,projectPath)
-	cmd := exec.Command(texteditorCmd,projectPath)
+	_ = os.MkdirAll(p.path, os.ModePerm)
+	fmt.Printf("Succesfully created project %v at %v\n", p.name, p.path)
+	cmd := exec.Command(texteditorCmd, p.path)
 	if err := cmd.Run(); err != nil {
 		fmt.Print(err)
 	}
